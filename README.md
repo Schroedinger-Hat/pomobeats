@@ -15,54 +15,55 @@ A simple Pomodoro timer with music playback for your work and break sessions. Ke
 - Unix-like system (macOS, Linux, BSD)
 - Bash shell
 - MP3 audio files for music (not included)
+- `jq` command-line JSON processor
 - One of the following audio players:
   - macOS: `afplay` (built-in)
   - Linux/Unix: `mpg123` or `sox`
 
-### Installing Audio Players
+### Installing Prerequisites
 
 #### macOS
+```bash
+# Install jq
+brew install jq
 
-No installation needed - uses built-in `afplay`
+# No audio player installation needed - uses built-in afplay
+```
 
 #### Debian/Ubuntu Linux
-
 ```bash
-# Install mpg123 (recommended)
-sudo apt-get install mpg123
+# Install required packages
+sudo apt-get install jq mpg123
 
-# Or install sox
-sudo apt-get install sox libsox-fmt-mp3
+# Or if using sox instead of mpg123
+sudo apt-get install jq sox libsox-fmt-mp3
 ```
 
 #### Fedora/RHEL
-
 ```bash
-# Install mpg123 (recommended)
-sudo dnf install mpg123
+# Install required packages
+sudo dnf install jq mpg123
 
-# Or install sox
-sudo dnf install sox sox-plugins-mp3
+# Or if using sox instead
+sudo dnf install jq sox sox-plugins-mp3
 ```
 
 #### Arch Linux
-
 ```bash
-# Install mpg123 (recommended)
-sudo pacman -S mpg123
+# Install required packages
+sudo pacman -S jq mpg123
 
-# Or install sox
-sudo pacman -S sox
+# Or if using sox instead
+sudo pacman -S jq sox
 ```
 
 #### BSD
-
 ```bash
 # FreeBSD (using pkg)
-pkg install mpg123
+pkg install jq mpg123
 
 # OpenBSD
-pkg_add mpg123
+pkg_add jq mpg123
 ```
 
 ## Installation
@@ -155,12 +156,27 @@ pomobeats -s
 
 Runs the timer with only chime sounds (no music)
 
+### View Analytics
+
+```bash
+pomobeats analytics
+```
+
+Shows statistics about your Pomodoro sessions, including:
+- Total work and break time
+- Today's work and break time
+- This week's work and break time
+
 ### Options
 
 - `-w <minutes>`: Set work duration (default: 25)
 - `-b <minutes>`: Set break duration (default: 5)
 - `-s`: Silent mode (no music, only chimes)
 - `-h`: Show help message
+
+### Commands
+
+- `analytics`: Display session statistics
 
 ## Controls
 

@@ -4,6 +4,13 @@
 DEFAULT_WORK_DURATION=25
 DEFAULT_BREAK_DURATION=5
 
+# Check for required commands
+if ! command -v jq >/dev/null 2>&1; then
+    echo "Error: jq is not installed. Please install jq to use this script." >&2
+    echo "Visit: https://stedolan.github.io/jq/download/" >&2
+    exit 1
+fi
+
 # Detect OS and set appropriate audio player
 detect_audio_player() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -48,14 +55,100 @@ play_audio() {
     esac
 }
 
+# Analytics file path
+ANALYTICS_FILE="$HOME/.pomobeats_analytics.json"
+
+# Function to initialize analytics file if it doesn't exist
+init_analytics() {
+    if [ ! -f "$ANALYTICS_FILE" ]; then
+        echo '{
+            "sessions": [],
+            "total_work_time": 0,
+            "total_break_time": 0
+        }' > "$ANALYTICS_FILE"
+    fi
+}
+
+# Function to log a completed session
+log_session() {
+    local session_type=$1
+    local duration=$2
+    local timestamp=$(date +%s)
+    local date=$(date +%Y-%m-%d)
+    
+    # Create new session JSON
+    local new_session="{\"type\":\"$session_type\",\"duration\":$duration,\"timestamp\":$timestamp,\"date\":\"$date\"}"
+    
+    # Initialize file if it doesn't exist
+    if [ ! -f "$ANALYTICS_FILE" ]; then
+        echo '{"sessions":[]}' > "$ANALYTICS_FILE"
+    fi
+    
+    # Create a temporary file
+    local temp_file=$(mktemp)
+    
+    # Read current content and add new session
+    if [ -f "$ANALYTICS_FILE" ]; then
+        # Insert the new session at the beginning of the sessions array
+        jq --arg session "$new_session" '.sessions = [($session | fromjson)] + .sessions' "$ANALYTICS_FILE" > "$temp_file"
+        
+        if [ $? -eq 0 ] && [ -s "$temp_file" ]; then
+            mv "$temp_file" "$ANALYTICS_FILE"
+        else
+            echo "Error: Failed to update analytics file" >&2
+            rm -f "$temp_file"
+            return 1
+        fi
+    fi
+}
+
+# Function to display analytics
+show_analytics() {
+    if [ ! -f "$ANALYTICS_FILE" ]; then
+        echo "No analytics data available yet."
+        return
+    fi
+    
+    local current_date=$(date +%Y-%m-%d)
+    local week_ago=$(date -v-7d +%Y-%m-%d)
+    
+    # Use jq to calculate statistics with a simpler query structure
+    local stats=$(jq -r --arg today "$current_date" --arg week_ago "$week_ago" '
+        reduce .sessions[] as $session (
+            {total_work: 0, total_break: 0, today_work: 0, today_break: 0, week_work: 0, week_break: 0};
+            if $session.type == "work" then
+                .total_work += $session.duration |
+                if $session.date == $today then .today_work += $session.duration else . end |
+                if $session.date >= $week_ago then .week_work += $session.duration else . end
+            else
+                .total_break += $session.duration |
+                if $session.date == $today then .today_break += $session.duration else . end |
+                if $session.date >= $week_ago then .week_break += $session.duration else . end
+            end
+        ) | 
+        "Total Work Time: \(.total_work / 3600 | floor)h \(.total_work % 3600 / 60 | floor)m\n" +
+        "Total Break Time: \(.total_break / 3600 | floor)h \(.total_break % 3600 / 60 | floor)m\n" +
+        "Today Work Time: \(.today_work / 3600 | floor)h \(.today_work % 3600 / 60 | floor)m\n" +
+        "Today Break Time: \(.today_break / 3600 | floor)h \(.today_break % 3600 / 60 | floor)m\n" +
+        "This Week Work Time: \(.week_work / 3600 | floor)h \(.week_work % 3600 / 60 | floor)m\n" +
+        "This Week Break Time: \(.week_break / 3600 | floor)h \(.week_break % 3600 / 60 | floor)m"
+    ' "$ANALYTICS_FILE")
+    
+    echo "📊 Pomodoro Analytics"
+    echo "===================="
+    echo "$stats"
+}
+
 # Function to display usage
 show_usage() {
-    echo "Usage: $0 [-w work_duration] [-b break_duration]"
+    echo "Usage: $0 [-w work_duration] [-b break_duration] [-s] [-h] [analytics]"
     echo "Options:"
     echo "  -w    Work duration in minutes (default: $DEFAULT_WORK_DURATION)"
     echo "  -b    Break duration in minutes (default: $DEFAULT_BREAK_DURATION)"
     echo "  -s    Silent mode (no music)"
     echo "  -h    Show this help message"
+    echo "Commands:"
+    echo "  analytics    Show pomodoro session statistics"
     exit 1
 }
 
@@ -63,6 +156,12 @@ show_usage() {
 WORK_DURATION=$DEFAULT_WORK_DURATION
 BREAK_DURATION=$DEFAULT_BREAK_DURATION
 SILENT_MODE=false
+
+if [ "$1" = "analytics" ]; then
+    init_analytics
+    show_analytics
+    exit 0
+fi
 
 while getopts "w:b:sh" opt; do
     case $opt in
@@ -98,9 +197,10 @@ WORK_DURATION=$((WORK_DURATION * 60))
 BREAK_DURATION=$((BREAK_DURATION * 60))
 
 # Directory settings
-MUSIC_DIR=./music/work
-MUSIC_BREAK_DIR=./music/break
-SOUND_DIR=./sounds
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MUSIC_DIR="$SCRIPT_DIR/music/work"
+MUSIC_BREAK_DIR="$SCRIPT_DIR/music/break"
+SOUND_DIR="$SCRIPT_DIR/sounds"
 
 # Create a temporary file to store PIDs
 PID_FILE="/tmp/pomobeats_$$.pids"
@@ -264,6 +364,9 @@ display_countdown() {
 # Clean up any orphaned processes before starting
 cleanup_orphaned
 
+# Initialize analytics
+init_analytics
+
 # Main loop
 while true; do
     echo "🍅 Work session started! Playing music for $(($WORK_DURATION / 60)) minutes..."
@@ -275,9 +378,15 @@ while true; do
         play_music "$MUSIC_DIR" "WORK_MUSIC_PID"
     fi
     
+    session_start_time=$(date +%s)
+    
     # Wait for work duration with countdown
     end_time=$(($(date +%s) + WORK_DURATION))
     display_countdown $end_time "Work"
+    
+    # Log work session
+    actual_duration=$(($(date +%s) - session_start_time))
+    log_session "work" $actual_duration
     
     echo "Work session complete. Stopping work music..."
     
@@ -297,9 +406,15 @@ while true; do
         play_music "$MUSIC_BREAK_DIR" "BREAK_MUSIC_PID"
     fi
     
+    session_start_time=$(date +%s)
+    
     # Wait for break duration with countdown
     end_time=$(($(date +%s) + BREAK_DURATION))
     display_countdown $end_time "Break"
+    
+    # Log break session
+    actual_duration=$(($(date +%s) - session_start_time))
+    log_session "break" $actual_duration
     
     echo "Break complete. Stopping break music..."
     if [ "$SILENT_MODE" = false ]; then
