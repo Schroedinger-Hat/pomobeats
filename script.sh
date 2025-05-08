@@ -4,6 +4,50 @@
 DEFAULT_WORK_DURATION=25
 DEFAULT_BREAK_DURATION=5
 
+# Detect OS and set appropriate audio player
+detect_audio_player() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        if command -v afplay >/dev/null 2>&1; then
+            echo "afplay"
+            return
+        fi
+    else
+        # Try mpg123 first (most Unix systems)
+        if command -v mpg123 >/dev/null 2>&1; then
+            echo "mpg123"
+            return
+        fi
+        # Try sox's play command
+        if command -v play >/dev/null 2>&1; then
+            echo "play"
+            return
+        fi
+    fi
+    
+    echo "No suitable audio player found. Please install mpg123 or sox." >&2
+    exit 1
+}
+
+# Set the audio player
+MUSIC_PLAYER=$(detect_audio_player)
+
+# Function to play audio with the correct player
+play_audio() {
+    local audio_file="$1"
+    case "$MUSIC_PLAYER" in
+        "afplay")
+            afplay "$audio_file" 2>/dev/null
+        ;;
+        "mpg123")
+            mpg123 -q "$audio_file" 2>/dev/null
+        ;;
+        "play")
+            play -q "$audio_file" 2>/dev/null
+        ;;
+    esac
+}
+
 # Function to display usage
 show_usage() {
     echo "Usage: $0 [-w work_duration] [-b break_duration]"
@@ -57,7 +101,6 @@ BREAK_DURATION=$((BREAK_DURATION * 60))
 MUSIC_DIR=./music/work
 MUSIC_BREAK_DIR=./music/break
 SOUND_DIR=./sounds
-MUSIC_PLAYER="afplay"
 
 # Create a temporary file to store PIDs
 PID_FILE="/tmp/pomobeats_$$.pids"
@@ -139,7 +182,7 @@ play_music() {
         while true; do
             for song in "$music_dir"/*.mp3; do
                 if [ -f "$song" ]; then
-                    "$MUSIC_PLAYER" "$song" &
+                    play_audio "$song" &
                     local player_pid=$!
                     echo "$player_pid" >> "$PID_FILE"
                     wait "$player_pid" || exit 0
@@ -195,8 +238,7 @@ stop_music() {
 # Function to play chime
 play_chime() {
     if [ -f "$SOUND_DIR/chime.mp3" ]; then
-        # Play chime and wait for it to finish
-        "$MUSIC_PLAYER" "$SOUND_DIR/chime.mp3" 2>/dev/null
+        play_audio "$SOUND_DIR/chime.mp3"
         sleep 1  # Short pause after chime
     fi
 }

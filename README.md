@@ -12,9 +12,58 @@ A simple Pomodoro timer with music playback for your work and break sessions. Ke
 
 ## Prerequisites
 
-- macOS (uses `afplay` for audio playback)
+- Unix-like system (macOS, Linux, BSD)
 - Bash shell
 - MP3 audio files for music (not included)
+- One of the following audio players:
+  - macOS: `afplay` (built-in)
+  - Linux/Unix: `mpg123` or `sox`
+
+### Installing Audio Players
+
+#### macOS
+
+No installation needed - uses built-in `afplay`
+
+#### Debian/Ubuntu Linux
+
+```bash
+# Install mpg123 (recommended)
+sudo apt-get install mpg123
+
+# Or install sox
+sudo apt-get install sox libsox-fmt-mp3
+```
+
+#### Fedora/RHEL
+
+```bash
+# Install mpg123 (recommended)
+sudo dnf install mpg123
+
+# Or install sox
+sudo dnf install sox sox-plugins-mp3
+```
+
+#### Arch Linux
+
+```bash
+# Install mpg123 (recommended)
+sudo pacman -S mpg123
+
+# Or install sox
+sudo pacman -S sox
+```
+
+#### BSD
+
+```bash
+# FreeBSD (using pkg)
+pkg install mpg123
+
+# OpenBSD
+pkg_add mpg123
+```
 
 ## Installation
 
