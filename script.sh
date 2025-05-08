@@ -243,6 +243,24 @@ play_chime() {
     fi
 }
 
+# Function to display remaining time
+display_countdown() {
+    local end_time=$1
+    local session_type=$2
+    
+    while [ $(date +%s) -lt $end_time ]; do
+        local current_time=$(date +%s)
+        local remaining_seconds=$(( end_time - current_time ))
+        local minutes=$(( remaining_seconds / 60 ))
+        local seconds=$(( remaining_seconds % 60 ))
+        
+        # Use carriage return to update the same line
+        printf "\r%s remaining: %02d:%02d" "$session_type" $minutes $seconds
+        sleep 1
+    done
+    echo "" # New line after countdown finishes
+}
+
 # Clean up any orphaned processes before starting
 cleanup_orphaned
 
@@ -257,11 +275,9 @@ while true; do
         play_music "$MUSIC_DIR" "WORK_MUSIC_PID"
     fi
     
-    # Wait for work duration
+    # Wait for work duration with countdown
     end_time=$(($(date +%s) + WORK_DURATION))
-    while [ $(date +%s) -lt $end_time ]; do
-        sleep 1
-    done
+    display_countdown $end_time "Work"
     
     echo "Work session complete. Stopping work music..."
     
@@ -281,11 +297,9 @@ while true; do
         play_music "$MUSIC_BREAK_DIR" "BREAK_MUSIC_PID"
     fi
     
-    # Wait for break duration
+    # Wait for break duration with countdown
     end_time=$(($(date +%s) + BREAK_DURATION))
-    while [ $(date +%s) -lt $end_time ]; do
-        sleep 1
-    done
+    display_countdown $end_time "Break"
     
     echo "Break complete. Stopping break music..."
     if [ "$SILENT_MODE" = false ]; then
