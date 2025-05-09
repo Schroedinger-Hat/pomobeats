@@ -18,7 +18,10 @@ A simple Pomodoro timer with music playback for your work and break sessions. Ke
 - `jq` command-line JSON processor
 - One of the following audio players:
   - macOS: `afplay` (built-in)
-  - Linux/Unix: `mpg123` or `sox`
+  - Linux/Unix supported players:
+    - `ffplay`
+    - `mpg123`
+    - `sox`
 
 ### Installing Prerequisites
 

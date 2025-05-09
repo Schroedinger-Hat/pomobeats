@@ -13,19 +13,20 @@ fi
 
 # Detect OS and set appropriate audio player
 detect_audio_player() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
+    if [[ "$OSTYPE" == "darwin"* ]]; then # macOS
         if command -v afplay >/dev/null 2>&1; then
             echo "afplay"
             return
         fi
-    else
-        # Try mpg123 first (most Unix systems)
+    else # Linux or other Unix-like OS
+        if command -v ffplay >/dev/null 2>&1; then
+            echo "ffplay"
+            return
+        fi
         if command -v mpg123 >/dev/null 2>&1; then
             echo "mpg123"
             return
         fi
-        # Try sox's play command
         if command -v play >/dev/null 2>&1; then
             echo "play"
             return
@@ -45,6 +46,9 @@ play_audio() {
     case "$MUSIC_PLAYER" in
         "afplay")
             afplay "$audio_file" 2>/dev/null
+        ;;
+        "ffplay")
+            ffplay -v 0 -nodisp -autoexit "$audio_file" 2>/dev/null
         ;;
         "mpg123")
             mpg123 -q "$audio_file" 2>/dev/null
