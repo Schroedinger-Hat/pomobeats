@@ -146,7 +146,7 @@ This will start the timer with default durations (25min work, 5min break)
 ### Custom Durations
 
 ```bash
-pomobeats -w 45 -b 15
+pomobeats -w 45m -b 15m
 ```
 
 This starts a 45-minute work session followed by a 15-minute break
@@ -172,8 +172,8 @@ Shows statistics about your Pomodoro sessions, including:
 
 ### Options
 
-- `-w <minutes>`: Set work duration (default: 25)
-- `-b <minutes>`: Set break duration (default: 5)
+- `-w <duration>[s|m|h]`: Set work duration (default: 25m)
+- `-b <duration>[s|m|h]`: Set break duration (default: 5m)
 - `-s`: Silent mode (no music, only chimes)
 - `-h`: Show help message
 
