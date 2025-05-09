@@ -40,6 +40,9 @@ sudo apt-get install jq mpg123
 
 # Or if using sox instead of mpg123
 sudo apt-get install jq sox libsox-fmt-mp3
+
+# Or if using ffplay instead
+sudo apt-get install jq ffmpeg
 ```
 
 #### Fedora/RHEL
@@ -49,6 +52,21 @@ sudo dnf install jq mpg123
 
 # Or if using sox instead
 sudo dnf install jq sox sox-plugins-mp3
+
+# Or if using ffplay instead
+sudo dnf install jq ffmpeg
+```
+
+#### OpenSUSE
+```bash
+# Install required packages
+sudo zypper install jq mpg123
+
+# Or if using sox instead
+sudo zypper install jq sox
+
+# Or if using ffplay instead
+sudo zypper install jq ffmpeg
 ```
 
 #### Arch Linux
@@ -58,15 +76,45 @@ sudo pacman -S jq mpg123
 
 # Or if using sox instead
 sudo pacman -S jq sox
+
+# Or if using ffplay instead
+sudo pacman -S jq ffmpeg
 ```
 
-#### BSD
+#### FreeBSD
 ```bash
 # FreeBSD (using pkg)
 pkg install jq mpg123
 
-# OpenBSD
+# Or if using sox instead
+pkg install jq sox
+
+# Or if using ffplay instead
+pkg install jq ffmpeg
+```
+
+#### OpenBSD
+```bash
+# OpenBSD (using pkg_add)
 pkg_add jq mpg123
+
+# Or if using sox instead
+pkg_add jq sox
+
+# Or if using ffplay instead
+pkg_add jq ffmpeg
+```
+#### NetBSD
+
+```bash
+# NetBSD (using pkgin)
+pkgin install jq mpg123
+
+# Or if using sox instead
+pkgin install jq sox
+
+# Or if using ffplay instead
+pkgin install jq ffmpeg
 ```
 
 ## Installation
@@ -203,7 +251,7 @@ pomobeats/
 If music continues playing after stopping the script:
 
 ```bash
-pkill afplay
+pkill afplay # or pkill mpg123/sox/ffplay
 ```
 
 ## License
