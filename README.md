@@ -254,6 +254,26 @@ If music continues playing after stopping the script:
 pkill afplay # or pkill mpg123/sox/ffplay
 ```
 
+## Maintainers 👨‍💻👩‍💻
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/404answernotfound">
+          <img src="https://github.com/404answernotfound.png" width="100px;" alt="Lorenzo Pieri"/>
+          <br />
+          <sub>
+            <b>Lorenzo Pieri</b>
+          </sub>
+        </a>
+        <br />
+        <span>💻 Maintainer</span>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ## License
 
 This project is licensed under the GPL 3.0 License - see the LICENSE file for details.
