@@ -223,6 +223,7 @@ Shows statistics about your Pomodoro sessions, including:
 - `-w <duration>[s|m|h]`: Set work duration (default: 25m)
 - `-b <duration>[s|m|h]`: Set break duration (default: 5m)
 - `-s`: Silent mode (no music, only chimes)
+- `-r`: Shuffle mode
 - `-h`: Show help message
 
 ### Commands

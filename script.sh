@@ -23,6 +23,7 @@ DEFAULT_WORK_DURATION="${DEFAULT_WORK_DURATION:-"25m"}" # Default work duration 
 DEFAULT_BREAK_DURATION="${DEFAULT_BREAK_DURATION:-"5m"}" # Default break duration in minutes
 ANALYTICS_FILE="${ANALYTICS_FILE:-$HOME/.cache/pomobeats/analytics.json}" # File to store analytics data
 SILENT_MODE="${SILENT_MODE:-false}" # Flag for silent mode (no music)
+SHUFFLED="${SHUFFLED:-false}" # Flag for shuffled music
 
 # --- Header: internal variable ---
 pid_file="/tmp/pomobeats_$$.pids" # Temporary file to store PIDs
@@ -188,6 +189,7 @@ show_usage() {
   echo "  -w    Work duration in minutes (default: $DEFAULT_WORK_DURATION)"
   echo "  -b    Break duration in minutes (default: $DEFAULT_BREAK_DURATION)"
   echo "  -s    Silent mode (no music)"
+  echo "  -r    Shuffle mode"
   echo "  -h    Show this help message"
   echo "Commands:"
   echo "  analytics    Show pomodoro session statistics"
@@ -273,17 +275,31 @@ play_music() {
     kill_process_tree "${!current_pid_var}"
   fi
 
+  songs=()
+
+  for song in "$music_dir"/*.mp3; do
+    if [ -f "$song" ]; then
+      songs+=("$song")
+    fi
+  done
+
+  # Check if music should be shaffled
+  if [ "$SHUFFLED" = true ]; then
+    echo "Shuffling music..."
+    songs=($(printf "%s\n" "${songs[@]}" | shuf))
+  else
+    echo "No need to shuffle music..."
+  fi
+
   # Start new music process
   (
   exec 2>/dev/null  # Redirect stderr for this subshell
   while true; do
-    for song in "$music_dir"/*.mp3; do
-      if [ -f "$song" ]; then
-        play_audio "$song" &
-        local player_pid=$!
-        echo "$player_pid" >> "$pid_file"
-        wait "$player_pid" || exit 0
-      fi
+    for song in "${songs[@]}"; do
+      play_audio "$song" &
+      local player_pid=$!
+      echo "$player_pid" >> "$pid_file"
+      wait "$player_pid" || exit 0
     done
   done
   ) &
@@ -394,7 +410,7 @@ main() {
 
   # Set up trap for various signals
   trap cleanup SIGINT SIGTERM SIGHUP EXIT
-  while getopts "w:b:sh" opt; do
+  while getopts "w:b:srh" opt; do
     case $opt in
       w)
         # manage h = hours m = minutes s = seconds
@@ -415,6 +431,9 @@ main() {
         ;;
       s)
         SILENT_MODE=true
+        ;;
+      r)
+        SHUFFLED=true
         ;;
       ?)
         echo "Invalid option: -$OPTARG"
