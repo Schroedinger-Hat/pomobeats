@@ -12,13 +12,10 @@ if [[ "${TRACE-0}" == "1" ]]; then
   set -o xtrace # Print each command before executing it
 fi
 
-# --- Header: Global Variables ---
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # Directory of the script
-
 # --- Header: Environment variables ---
 MUSIC_DIR="${MUSIC_DIR:-$HOME/pomobeats/music/work}"
 MUSIC_BREAK_DIR="${MUSIC_BREAK_DIR:-$HOME/pomobeats/music/break}"
-SOUND_DIR="${SOUND_DIR:-$SCRIPT_DIR/sounds}"
+SOUND_DIR="${SOUND_DIR:-$HOME/pomobeats/sounds}"
 DEFAULT_WORK_DURATION="${DEFAULT_WORK_DURATION:-"25m"}" # Default work duration in minutes
 DEFAULT_BREAK_DURATION="${DEFAULT_BREAK_DURATION:-"5m"}" # Default break duration in minutes
 ANALYTICS_FILE="${ANALYTICS_FILE:-$HOME/.cache/pomobeats/analytics.json}" # File to store analytics data
@@ -190,6 +187,7 @@ show_usage() {
   echo "  -b    Break duration in minutes (default: $DEFAULT_BREAK_DURATION)"
   echo "  -s    Silent mode (no music)"
   echo "  -r    Shuffle mode"
+  echo "  -c    Collection"
   echo "  -h    Show this help message"
   echo "Commands:"
   echo "  analytics    Show pomodoro session statistics"
@@ -410,7 +408,7 @@ main() {
 
   # Set up trap for various signals
   trap cleanup SIGINT SIGTERM SIGHUP EXIT
-  while getopts "w:b:srh" opt; do
+  while getopts "w:b:c:sh" opt; do
     case $opt in
       w)
         # manage h = hours m = minutes s = seconds
@@ -435,6 +433,12 @@ main() {
       r)
         SHUFFLED=true
         ;;
+      c)
+        if [[ "$OPTARG" =~ ^[A-Za-z]+$ ]]; then
+          echo "Playing a collection... $OPTARG 🎹"
+          collection=$OPTARG
+        fi
+        ;;
       ?)
         echo "Invalid option: -$OPTARG"
         show_usage
@@ -457,7 +461,11 @@ main() {
     if [ "$SILENT_MODE" = true ]; then
       echo "Silent mode is enabled. You will only hear the chime."
     else
-      play_music "$MUSIC_DIR" "WORK_MUSIC_PID"
+      if [ -n "$collection" ] && [ -d "$MUSIC_DIR/$collection" ]; then
+        play_music "$MUSIC_DIR/$collection" "WORK_MUSIC_PID"
+      else
+        play_music "$MUSIC_DIR" "WORK_MUSIC_PID"
+      fi
     fi
 
     session_start_time=$(date +%s)
@@ -485,7 +493,11 @@ main() {
     if [ "$SILENT_MODE" = true ]; then
       echo "Silent mode is enabled. You will only hear the chime."
     else
-      play_music "$MUSIC_BREAK_DIR" "BREAK_MUSIC_PID"
+      if [ -n "$collection" ] && [ -d "$MUSIC_BREAK_DIR/$collection" ]; then
+        play_music "$MUSIC_BREAK_DIR/$collection" "BREAK_MUSIC_PID"
+      else
+        play_music "$MUSIC_BREAK_DIR" "BREAK_MUSIC_PID"
+      fi
     fi
 
     session_start_time=$(date +%s)
