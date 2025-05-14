@@ -227,7 +227,7 @@ Shows statistics about your Pomodoro sessions, including:
 - `-b <duration>[s|m|h]`: Set break duration (default: 5m)
 - `-s`: Silent mode (no music, only chimes)
 - `-r`: Shuffle mode
-- `-c`: Set a collection
+- `-c <collection>`: Set a collection
 - `-h`: Show help message
 
 ### Commands
