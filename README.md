@@ -6,6 +6,7 @@ A simple Pomodoro timer with music playback for your work and break sessions. Ke
 
 - Customizable work and break durations
 - Different music for work and break sessions
+- Customizable collections
 - Chime sound notifications between sessions
 - Silent mode option (only chimes, no music)
 - Graceful process handling and cleanup
@@ -181,6 +182,8 @@ mkdir -p $HOME/pomobeats/music/work $HOME/pomobeats/music/break
    - Break music goes in `music/break/`
    - Check the placeholder.md files in each directory for music recommendations
 
+You can also play collections by creating a collection folder (e.g. `lofi`) inside both `work` and `break` folders.
+
 ## Usage
 
 ### Basic Usage
@@ -224,6 +227,7 @@ Shows statistics about your Pomodoro sessions, including:
 - `-b <duration>[s|m|h]`: Set break duration (default: 5m)
 - `-s`: Silent mode (no music, only chimes)
 - `-r`: Shuffle mode
+- `-c`: Set a collection
 - `-h`: Show help message
 
 ### Commands
@@ -238,13 +242,14 @@ Shows statistics about your Pomodoro sessions, including:
 ## Directory Structure
 
 ```
-pomobeats/
-├── music/
-│   ├── work/     # Put your work music here
-│   └── break/    # Put your break music here
-├── sounds/
-│   └── chime.mp3 # Session transition sound
-└── script.sh     # Main script
+$HOME/pomobeats/
+├──-- music/
+│     ├── work/     # Put your work music here
+│         └── [collection]
+│     └── break/    # Put your break music here
+│         └── [collection]
+├──-- sounds/
+      └── chime.mp3 # Session transition sound
 ```
 
 ## Troubleshooting
