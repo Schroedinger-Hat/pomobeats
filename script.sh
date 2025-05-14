@@ -408,7 +408,7 @@ main() {
 
   # Set up trap for various signals
   trap cleanup SIGINT SIGTERM SIGHUP EXIT
-  while getopts "w:b:c:sh" opt; do
+  while getopts "w:b:c:rsh" opt; do
     case $opt in
       w)
         # manage h = hours m = minutes s = seconds
