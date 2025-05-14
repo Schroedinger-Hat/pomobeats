@@ -173,7 +173,7 @@ source ~/.zshrc  # or source ~/.bash_profile
 1. Create your music directories:
 
 ```bash
-mkdir -p music/work music/break
+mkdir -p $HOME/pomobeats/music/work $HOME/pomobeats/music/break
 ```
 
 2. Add your MP3 files:

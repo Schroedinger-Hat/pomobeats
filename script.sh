@@ -16,8 +16,8 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # Directory of the script
 
 # --- Header: Environment variables ---
-MUSIC_DIR="${MUSIC_DIR:-$SCRIPT_DIR/music/work}"
-MUSIC_BREAK_DIR="${MUSIC_BREAK_DIR:-$SCRIPT_DIR/music/break}"
+MUSIC_DIR="${MUSIC_DIR:-$HOME/pomobeats/music/work}"
+MUSIC_BREAK_DIR="${MUSIC_BREAK_DIR:-$HOME/pomobeats/music/break}"
 SOUND_DIR="${SOUND_DIR:-$SCRIPT_DIR/sounds}"
 DEFAULT_WORK_DURATION="${DEFAULT_WORK_DURATION:-"25m"}" # Default work duration in minutes
 DEFAULT_BREAK_DURATION="${DEFAULT_BREAK_DURATION:-"5m"}" # Default break duration in minutes
