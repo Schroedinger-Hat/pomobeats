@@ -23,7 +23,7 @@ SILENT_MODE="${SILENT_MODE:-false}" # Flag for silent mode (no music)
 SHUFFLED="${SHUFFLED:-false}" # Flag for shuffled music
 
 # --- Header: internal variable ---
-pid_file="/tmp/pomobeats_$$.pids" # Temporary file to store PIDs
+pid_file="/tmp/pomobeats_$.pids" # Temporary file to store PIDs
 
 # --- Helpers: Convert to second ---
 convert_to_seconds() {
@@ -191,6 +191,8 @@ show_usage() {
   echo "  -h    Show this help message"
   echo "Commands:"
   echo "  analytics    Show pomodoro session statistics"
+  echo "Hotkeys:"
+  echo "  Spacebar     Pause/Resume the timer"
   exit 1
 }
 
@@ -247,7 +249,8 @@ cleanup() {
 
   # Read and kill all stored PIDs
   if [ -f "$pid_file" ]; then
-    while read -r pid; do
+    while read -r pid;
+ do
       if [ -n "$pid" ]; then
         kill_process_tree "$pid"
       fi
@@ -349,6 +352,26 @@ stop_music() {
   fi
 }
 
+# --- Helpers: Pause Music ---
+# Function to pause music
+pause_music() {
+  local pid=$1
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    # Pause the main music process and all its children
+    pkill -SIGSTOP -P "$pid" 2>/dev/null || kill -SIGSTOP "$pid" 2>/dev/null
+  fi
+}
+
+# --- Helpers: Resume Music ---
+# Function to resume music
+resume_music() {
+  local pid=$1
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    # Resume the main music process and all its children
+    pkill -SIGCONT -P "$pid" 2>/dev/null || kill -SIGCONT "$pid" 2>/dev/null
+  fi
+}
+
 # --- Helpers: Play Chime ---
 # Function to play chime
 play_chime() {
@@ -363,16 +386,36 @@ play_chime() {
 display_countdown() {
   local end_time=$1
   local session_type=$2
+  local music_pid=${3:-}
+  local paused=false
+  local time_paused=0
 
   while [ $(date +%s) -lt $end_time ]; do
-    local current_time=$(date +%s)
-    local remaining_seconds=$(( end_time - current_time ))
-    local minutes=$(( remaining_seconds / 60 ))
-    local seconds=$(( remaining_seconds % 60 ))
+    # Listen for spacebar to pause/resume
+    if read -t 0.1 -n 1 key && [[ "$key" == ' ' ]]; then
+      paused=$(! $paused)
+      if $paused; then
+        time_paused=$(date +%s)
+        [ -n "$music_pid" ] && pause_music "$music_pid"
+        printf "\r%s remaining: Paused... (Press Space to resume)" "$session_type"
+      else
+        local time_resumed=$(date +%s)
+        local pause_duration=$((time_resumed - time_paused))
+        end_time=$((end_time + pause_duration))
+        [ -n "$music_pid" ] && resume_music "$music_pid"
+      fi
+    fi
 
-    # Use carriage return to update the same line
-    printf "\r%s remaining: %02d:%02d" "$session_type" $minutes $seconds
-    sleep 1
+    if ! $paused; then
+      local current_time=$(date +%s)
+      local remaining_seconds=$(( end_time - current_time ))
+      local minutes=$(( remaining_seconds / 60 ))
+      local seconds=$(( remaining_seconds % 60 ))
+
+      # Use carriage return to update the same line
+      printf "\r%s remaining: %02d:%02d" "$session_type" $minutes $seconds
+    fi
+    sleep 0.1
   done
   echo "" # New line after countdown finishes
 }
@@ -381,14 +424,14 @@ display_countdown() {
 if [[ "${1-}" =~ ^-*h(elp)?$ ]]; then
   show_usage
   exit 0
-fi
+}
 
 # --- Main: checks ---
 if ! command -v jq >/dev/null 2>&1; then
   echo "Error: jq is not installed. Please install jq to use this script." >&2
   echo "Visit: https://stedolan.github.io/jq/download/" >&2
   exit 1
-fi
+}
 
 # --- Main: main ---
 main() {
@@ -472,7 +515,7 @@ main() {
 
     # Wait for work duration with countdown
     end_time=$(($(date +%s) + work_duration))
-    display_countdown $end_time "Work"
+    display_countdown $end_time "Work" "${WORK_MUSIC_PID:-}"
 
     # Log work session
     actual_duration=$(($(date +%s) - session_start_time))
@@ -504,7 +547,7 @@ main() {
 
     # Wait for break duration with countdown
     end_time=$(($(date +%s) + break_duration))
-    display_countdown $end_time "Break"
+    display_countdown $end_time "Break" "${BREAK_MUSIC_PID:-}"
 
     # Log break session
     actual_duration=$(($(date +%s) - session_start_time))
